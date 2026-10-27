@@ -121,8 +121,8 @@ details[open] summary::before { content: "▾"; }
         </div>
       </div>
       <div><span class="lbl">Access</span><div class="chips" id="f-access"></div></div>
-      <div><span class="lbl">Status</span><div class="chips" id="f-status"></div></div>
       <div><span class="lbl">Category</span><div class="chips" id="f-cat"></div></div>
+      <div><span class="lbl">Status</span><div class="chips" id="f-status"></div></div>
       <div class="row">
         <label class="check"><input type="checkbox" id="forks"> Show forks</label>
         <button class="btn" id="reset" type="button">Reset filters</button>
@@ -147,17 +147,17 @@ const PORTALS = [
 
 // Topic convention: access-<value> and category-<value> on each GitHub repo.
 const ACCESS = [
-  { key: "portfolio", label: "Portfolio" },
-  { key: "home",      label: "Home" },
-  { key: "other",     label: "Other" },
-  { key: "none",      label: "None" }
+  { key: "home",      label: "Home",      color: "#3fcf8e" },
+  { key: "portfolio", label: "Portfolio", color: "#a78bfa" },
+  { key: "other",     label: "Other",     color: "#8b93ad" },
+  { key: "none",      label: "None",      color: "#8b93ad" }
 ];
 const STATUS = [
-  { key: "idea",       label: "Idea" },          // just the basic idea, not started yet
+  { key: "done",        label: "Done" },
   { key: "in-progress", label: "In progress" },
-  { key: "done",       label: "Done" },
-  { key: "abandoned",  label: "Abandoned" },
-  { key: "none",       label: "None" }
+  { key: "idea",        label: "Idea" },          // just the basic idea, not started yet
+  { key: "abandoned",   label: "Abandoned" },
+  { key: "none",        label: "None" }
 ];
 const CATEGORY = [
   { key: "projects",   label: "Projects",   color: "#3fcf8e" },
