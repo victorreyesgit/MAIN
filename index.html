@@ -58,6 +58,7 @@ input[type="search"], select { font: inherit; padding: .55rem .75rem; color: var
   border: 1px solid var(--line); border-radius: 8px; }
 input[type="search"] { width: 100%; }
 label.check { display: flex; align-items: center; gap: .4rem; font-size: .9rem; color: var(--muted); padding-bottom: .5rem; }
+.groups { display: grid; gap: .9rem; }
 .chips { display: flex; flex-wrap: wrap; gap: .4rem; }
 .chip { font: inherit; font-size: .85rem; padding: .28rem .75rem; border-radius: 999px; cursor: pointer; display: inline-flex; align-items: center; gap: .4rem;
   color: var(--ink); background: transparent; border: 1px solid var(--line); }
@@ -111,18 +112,10 @@ details[open] summary::before { content: "▾"; }
         </div>
         <div>
           <label for="sort" class="lbl">Sort by</label>
-          <select id="sort">
-            <option value="updated">Recently updated</option>
-            <option value="name">Name (A–Z)</option>
-            <option value="access">Access</option>
-            <option value="category">Category</option>
-            <option value="status">Status</option>
-          </select>
+          <select id="sort"></select>
         </div>
       </div>
-      <div><span class="lbl">Access</span><div class="chips" id="f-access"></div></div>
-      <div><span class="lbl">Category</span><div class="chips" id="f-cat"></div></div>
-      <div><span class="lbl">Status</span><div class="chips" id="f-status"></div></div>
+      <div id="groups" class="groups"></div>
       <div class="row">
         <label class="check"><input type="checkbox" id="forks"> Show forks</label>
         <button class="btn" id="reset" type="button">Reset filters</button>
@@ -145,29 +138,24 @@ const PORTALS = [
   { name: "Research", url: "https://victorreyesgit.github.io/Portfolio/" }
 ];
 
-// Topic convention: access-<value> and category-<value> on each GitHub repo.
-const ACCESS = [
-  { key: "home",      label: "Home",      color: "#3fcf8e" },
-  { key: "portfolio", label: "Portfolio", color: "#a78bfa" },
-  { key: "other",     label: "Other",     color: "#8b93ad" },
-  { key: "none",      label: "None",      color: "#8b93ad" }
-];
-const STATUS = [
-  { key: "done",        label: "Done" },
-  { key: "in-progress", label: "In progress" },
-  { key: "idea",        label: "Idea" },          // just the basic idea, not started yet
-  { key: "abandoned",   label: "Abandoned" },
-  { key: "none",        label: "None" }
-];
-const CATEGORY = [
-  { key: "projects",   label: "Projects",   color: "#3fcf8e" },
-  { key: "research",   label: "Research",   color: "#a78bfa" },
-  { key: "playground", label: "Playground", color: "#ffb454" },
-  { key: "other",      label: "Other",      color: "#8b93ad" }
+// Topic groups. Any topic starting with "<prefix>-" is picked up automatically,
+// e.g. "category-teaching" becomes the value "Teaching" in the Category group.
+// The "known" values below only control order and colour; new values appear by themselves.
+// To add a whole new group, add one more entry here.
+const GREEN = "#3fcf8e", PURPLE = "#a78bfa", AMBER = "#ffb454", PINK = "#f472b6", GREY = "#8b93ad";
+const GROUPS = [
+  { prefix: "access", title: "Access", known: [
+      { key: "home", color: GREEN }, { key: "portfolio", color: PURPLE }, { key: "other", color: GREY } ] },
+  { prefix: "category", title: "Category", rowColor: true, known: [
+      { key: "projects", color: GREEN }, { key: "research", color: PURPLE }, { key: "teaching", color: PINK },
+      { key: "playground", color: AMBER }, { key: "other", color: GREY } ] },
+  { prefix: "status", title: "Status", known: [
+      { key: "done" }, { key: "in-progress" }, { key: "idea" }, { key: "abandoned" } ] }
 ];
 
 let repos = [];
-const state = { q: "", sort: "updated", forks: false, access: new Set(), cats: new Set(), status: new Set() };
+const state = { q: "", sort: "updated", forks: false, sel: {} };   // sel[prefix] = Set of selected keys
+GROUPS.forEach(g => state.sel[g.prefix] = new Set());
 const $ = id => document.getElementById(id);
 function el(tag, cls, text) {
   const n = document.createElement(tag);
@@ -241,13 +229,25 @@ async function fetchAllRepos() {
 }
 
 // ---------- Helpers ----------
-function pick(repo, prefix, list, fallback) {
-  const topics = repo.topics || [];
-  return list.find(o => topics.includes(prefix + o.key)) || list.find(o => o.key === fallback);
+const niceLabel = key => key.replace(/-/g, " ").replace(/^./, c => c.toUpperCase());
+
+// Build each group's option list from the topics actually found in your repos.
+function buildOptions() {
+  for (const g of GROUPS) {
+    const found = new Set();
+    for (const r of repos) for (const t of r.topics || [])
+      if (t.startsWith(g.prefix + "-") && t.length > g.prefix.length + 1) found.add(t.slice(g.prefix.length + 1));
+    found.delete("none");
+    const known = g.known.map(k => k.key);
+    const extra = [...found].filter(k => !known.includes(k)).sort();
+    g.options = [...g.known, ...extra.map(k => ({ key: k, color: GREY })), { key: "none", color: GREY }]
+      .map(o => ({ key: o.key, label: niceLabel(o.key), color: g.known.some(k => k.color) ? o.color : undefined }));
+  }
 }
-const accessOf = r => pick(r, "access-", ACCESS, "none");
-const categoryOf = r => pick(r, "category-", CATEGORY, "other");
-const statusOf = r => pick(r, "status-", STATUS, "none");
+function optionOf(r, g) {
+  const topics = r.topics || [];
+  return g.options.find(o => topics.includes(g.prefix + "-" + o.key)) || g.options[g.options.length - 1];
+}
 function pagesUrl(r) {
   if (r.homepage && /^https?:\/\//i.test(r.homepage)) return r.homepage;
   if (r.has_pages) {
@@ -259,27 +259,41 @@ function pagesUrl(r) {
 const baseRepos = () => repos.filter(r => state.forks || !r.fork);
 
 // ---------- Chips ----------
-function buildChips(container, options, set, countFn) {
-  container.replaceChildren();
-  for (const o of options) {
-    const b = el("button", "chip");
-    b.type = "button";
-    if (o.color) { const i = el("i"); i.style.setProperty("--c", o.color); b.append(i); }
-    b.append(document.createTextNode(o.label), el("small", "", String(countFn(o.key))));
-    b.setAttribute("aria-pressed", set.has(o.key) ? "true" : "false");
-    b.addEventListener("click", () => {
-      if (set.has(o.key)) set.delete(o.key); else set.add(o.key);
-      b.setAttribute("aria-pressed", set.has(o.key) ? "true" : "false");
-      render();
-    });
-    container.append(b);
-  }
-}
 function buildAllChips() {
   const list = baseRepos();
-  buildChips($("f-access"), ACCESS, state.access, k => list.filter(r => accessOf(r).key === k).length);
-  buildChips($("f-status"), STATUS, state.status, k => list.filter(r => statusOf(r).key === k).length);
-  buildChips($("f-cat"), CATEGORY, state.cats, k => list.filter(r => categoryOf(r).key === k).length);
+  const box = $("groups");
+  box.replaceChildren();
+  for (const g of GROUPS) {
+    const set = state.sel[g.prefix];
+    for (const k of [...set]) if (!g.options.some(o => o.key === k)) set.delete(k);
+    const wrap = el("div");
+    wrap.append(el("span", "lbl", g.title));
+    const chips = el("div", "chips");
+    for (const o of g.options) {
+      const b = el("button", "chip");
+      b.type = "button";
+      if (o.color) { const i = el("i"); i.style.setProperty("--c", o.color); b.append(i); }
+      b.append(document.createTextNode(o.label), el("small", "", String(list.filter(r => optionOf(r, g).key === o.key).length)));
+      b.setAttribute("aria-pressed", set.has(o.key) ? "true" : "false");
+      b.addEventListener("click", () => {
+        if (set.has(o.key)) set.delete(o.key); else set.add(o.key);
+        b.setAttribute("aria-pressed", set.has(o.key) ? "true" : "false");
+        render();
+      });
+      chips.append(b);
+    }
+    wrap.append(chips);
+    box.append(wrap);
+  }
+}
+function buildSortOptions() {
+  const sel = $("sort");
+  sel.replaceChildren();
+  const add = (v, t) => { const o = el("option", "", t); o.value = v; sel.append(o); };
+  add("updated", "Recently updated");
+  add("name", "Name (A–Z)");
+  GROUPS.forEach(g => add(g.prefix, g.title));
+  sel.value = state.sort;
 }
 
 // ---------- Filter + sort ----------
@@ -287,15 +301,13 @@ function visibleRepos() {
   const q = state.q.trim().toLowerCase();
   const out = baseRepos().filter(r =>
     (!q || r.name.toLowerCase().includes(q)) &&
-    (!state.access.size || state.access.has(accessOf(r).key)) &&
-    (!state.status.size || state.status.has(statusOf(r).key)) &&
-    (!state.cats.size || state.cats.has(categoryOf(r).key)));
-  const idx = (list, key) => list.findIndex(o => o.key === key);
+    GROUPS.every(g => !state.sel[g.prefix].size || state.sel[g.prefix].has(optionOf(r, g).key)));
   const byName = (a, b) => a.name.localeCompare(b.name);
-  if (state.sort === "name") out.sort(byName);
-  else if (state.sort === "access") out.sort((a, b) => idx(ACCESS, accessOf(a).key) - idx(ACCESS, accessOf(b).key) || byName(a, b));
-  else if (state.sort === "category") out.sort((a, b) => idx(CATEGORY, categoryOf(a).key) - idx(CATEGORY, categoryOf(b).key) || byName(a, b));
-  else if (state.sort === "status") out.sort((a, b) => idx(STATUS, statusOf(a).key) - idx(STATUS, statusOf(b).key) || byName(a, b));
+  const g = GROUPS.find(x => x.prefix === state.sort);
+  if (g) {
+    const idx = r => g.options.findIndex(o => o.key === optionOf(r, g).key);
+    out.sort((a, b) => idx(a) - idx(b) || byName(a, b));
+  } else if (state.sort === "name") out.sort(byName);
   else out.sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at));
   return out;
 }
@@ -312,11 +324,12 @@ function linkBlock(title, url) {
 function rowFor(r) {
   const li = el("li");
   const det = el("details");
-  det.style.setProperty("--c", categoryOf(r).color);
+  const rg = GROUPS.find(g => g.rowColor);
+  det.style.setProperty("--c", (rg && optionOf(r, rg).color) || GREY);
   const sum = el("summary");
   sum.append(el("span", "name", r.name));
   const labels = el("span", "labels");
-  labels.append(el("span", "tag", "Access: " + accessOf(r).label), el("span", "tag", "Status: " + statusOf(r).label), el("span", "tag", "Category: " + categoryOf(r).label));
+  GROUPS.forEach(g => labels.append(el("span", "tag", g.title + ": " + optionOf(r, g).label)));
   sum.append(labels);
   det.append(sum);
   const links = el("div", "links");
@@ -345,7 +358,8 @@ $("q").addEventListener("input", e => { state.q = e.target.value; render(); });
 $("sort").addEventListener("change", e => { state.sort = e.target.value; render(); });
 $("forks").addEventListener("change", e => { state.forks = e.target.checked; buildAllChips(); render(); });
 $("reset").addEventListener("click", () => {
-  state.q = ""; state.sort = "updated"; state.forks = false; state.access.clear(); state.cats.clear(); state.status.clear();
+  state.q = ""; state.sort = "updated"; state.forks = false;
+  GROUPS.forEach(g => state.sel[g.prefix].clear());
   $("q").value = ""; $("sort").value = "updated"; $("forks").checked = false;
   buildAllChips(); render();
 });
@@ -356,6 +370,8 @@ $("reset").addEventListener("click", () => {
   try {
     repos = await fetchAllRepos();
     $("state").hidden = true;
+    buildOptions();
+    buildSortOptions();
     buildAllChips();
     render();
   } catch (err) {
