@@ -1,78 +1,108 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="dark">
+<html lang="en" data-theme="light">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>MAIN · victorreyesgit</title>
 <style>
 :root {
-  --bg: #f3f4f7; --surface: #ffffff; --ink: #151a2d; --muted: #5a6178;
-  --line: #dcdfe8; --accent: #2b4fd8; --accent-ink: #ffffff; --accent-soft: #e6ebfc;
+  --bg: #eef1f7; --bg2: #e3e8f2; --surface: #ffffff; --ink: #121830; --muted: #566082;
+  --line: #d3d9e8; --accent: #b45309; --accent-ink: #ffffff; --accent-soft: #fdeed8; --live: #15803d;
+  --grid: rgba(18,24,48,.05);
   --font: "Avenir Next", "Segoe UI", "Helvetica Neue", Roboto, Arial, sans-serif;
 }
 :root[data-theme="dark"] {
-  --bg: #0f1220; --surface: #181c2e; --ink: #eceef6; --muted: #9aa1ba;
-  --line: #2a3050; --accent: #8fa6ff; --accent-ink: #0f1220; --accent-soft: #232a4d;
+  --bg: #0a0d1c; --bg2: #11163a; --surface: #131838; --ink: #eef0fa; --muted: #98a1c4;
+  --line: #262e5c; --accent: #ffb454; --accent-ink: #1a1203; --accent-soft: #2a2441; --live: #4ade80;
+  --grid: rgba(150,165,255,.06);
 }
 * { box-sizing: border-box; }
-body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--font); line-height: 1.5; }
+body { margin: 0; color: var(--ink); font-family: var(--font); line-height: 1.5; min-height: 100vh;
+  background:
+    linear-gradient(var(--grid) 1px, transparent 1px) 0 0 / 36px 36px,
+    linear-gradient(90deg, var(--grid) 1px, transparent 1px) 0 0 / 36px 36px,
+    radial-gradient(900px 420px at 85% -10%, var(--bg2), transparent 70%),
+    var(--bg); }
 :focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
-.wrap { max-width: 860px; margin: 0 auto; padding: 0 1.25rem; }
-header { padding: 2rem 0 1.25rem; display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; }
-h1 { margin: 0; font-size: 2.6rem; letter-spacing: .14em; line-height: 1; font-weight: 800; }
-.sub { margin: .4rem 0 0; color: var(--muted); }
+.wrap { max-width: 920px; margin: 0 auto; padding: 0 1.25rem; }
+header { padding: 2.4rem 0 1.4rem; display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; }
+h1 { margin: 0; font-size: clamp(3rem, 12vw, 5.2rem); letter-spacing: .12em; line-height: .95; font-weight: 800; }
+h1 span { color: var(--accent); }
+.sub { margin: .7rem 0 0; color: var(--muted); }
 .btn { font: inherit; font-size: .9rem; color: var(--ink); background: var(--surface); border: 1px solid var(--line);
   border-radius: 8px; padding: .45rem .8rem; cursor: pointer; }
 .btn:hover { border-color: var(--accent); }
+.btn.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); font-weight: 700; text-decoration: none; display: inline-block; }
 
-.controls { display: grid; gap: .9rem; padding: 1rem; background: var(--surface); border: 1px solid var(--line);
-  border-radius: 10px; margin-bottom: 1rem; }
+/* Portals */
+.portals { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); margin-bottom: 1rem; }
+.portal { padding: 1.2rem 1.3rem; background: var(--surface); border: 1px solid var(--line); border-radius: 14px;
+  display: flex; flex-direction: column; gap: .6rem; position: relative; overflow: hidden; }
+.portal::after { content: ""; position: absolute; inset: 0 0 auto 0; height: 3px; background: var(--accent); }
+.portal:hover { border-color: var(--accent); }
+.portal h2 { margin: 0; font-size: 1.5rem; display: flex; align-items: center; gap: .6rem; }
+.dot { width: .6rem; height: .6rem; border-radius: 50%; background: var(--muted); flex: none; }
+.dot.live { background: var(--live); box-shadow: 0 0 0 0 var(--live); animation: pulse 2.4s infinite; }
+@keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(74,222,128,.55); } 70%,100% { box-shadow: 0 0 0 9px rgba(74,222,128,0); } }
+.portal p { margin: 0; color: var(--muted); font-size: .93rem; }
+.portal .url { font-size: .8rem; color: var(--muted); overflow-wrap: anywhere; }
+.actions { display: flex; gap: .5rem; flex-wrap: wrap; margin-top: auto; padding-top: .4rem; }
+
+/* Controls */
+.controls { display: grid; gap: .9rem; padding: 1.1rem; background: var(--surface); border: 1px solid var(--line);
+  border-radius: 14px; margin-bottom: 1rem; }
 .row { display: flex; flex-wrap: wrap; gap: .75rem; align-items: flex-end; }
 .row > .grow { flex: 1 1 240px; }
-.lbl { display: block; font-size: .85rem; color: var(--muted); margin-bottom: .25rem; font-weight: 600; }
+.lbl { display: block; font-size: .85rem; color: var(--muted); margin-bottom: .3rem; font-weight: 600; }
 input[type="search"], select { font: inherit; padding: .55rem .75rem; color: var(--ink); background: var(--bg);
   border: 1px solid var(--line); border-radius: 8px; }
 input[type="search"] { width: 100%; }
 label.check { display: flex; align-items: center; gap: .4rem; font-size: .9rem; color: var(--muted); padding-bottom: .5rem; }
 .chips { display: flex; flex-wrap: wrap; gap: .4rem; }
-.chip { font: inherit; font-size: .85rem; padding: .25rem .7rem; border-radius: 999px; cursor: pointer;
+.chip { font: inherit; font-size: .85rem; padding: .28rem .75rem; border-radius: 999px; cursor: pointer; display: inline-flex; align-items: center; gap: .4rem;
   color: var(--ink); background: transparent; border: 1px solid var(--line); }
 .chip:hover { border-color: var(--accent); }
+.chip i { width: .55rem; height: .55rem; border-radius: 50%; background: var(--c, var(--muted)); }
 .chip[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
-.chip small { opacity: .7; margin-left: .3rem; }
+.chip small { opacity: .7; }
 
+/* List */
 .count { margin: 0 0 .6rem; color: var(--muted); font-size: .9rem; }
-.list { list-style: none; margin: 0 0 3rem; padding: 0; display: grid; gap: .5rem; }
-details { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; }
-details[open] { border-color: var(--accent); }
-summary { display: flex; flex-wrap: wrap; align-items: center; gap: .3rem .75rem; padding: .8rem 1rem; cursor: pointer; list-style: none; }
+.list { list-style: none; margin: 0 0 3rem; padding: 0; display: grid; gap: .55rem; }
+details { background: var(--surface); border: 1px solid var(--line); border-left: 5px solid var(--c, var(--muted)); border-radius: 12px; }
+details:hover { border-color: var(--accent); border-left-color: var(--c, var(--muted)); }
+details[open] { border-color: var(--accent); border-left-color: var(--c, var(--muted)); }
+summary { display: flex; flex-wrap: wrap; align-items: center; gap: .3rem .75rem; padding: .85rem 1rem; cursor: pointer; list-style: none; }
 summary::-webkit-details-marker { display: none; }
 summary::before { content: "▸"; color: var(--muted); }
 details[open] summary::before { content: "▾"; }
 .name { font-weight: 700; overflow-wrap: anywhere; }
 .labels { margin-left: auto; display: flex; gap: .35rem; flex-wrap: wrap; }
-.tag { font-size: .75rem; padding: .05rem .5rem; border-radius: 6px; background: var(--accent-soft); color: var(--ink); }
-.links { display: grid; gap: .5rem; padding: 0 1rem 1rem 2.1rem; }
+.tag { font-size: .75rem; padding: .05rem .55rem; border-radius: 6px; background: var(--accent-soft); color: var(--ink); }
+.links { display: grid; gap: .6rem; padding: 0 1rem 1rem 2.1rem; }
 .links a { color: var(--accent); overflow-wrap: anywhere; }
 .links .k { display: block; font-size: .8rem; color: var(--muted); }
 .links .none { color: var(--muted); font-size: .9rem; }
 .msg { padding: 2rem 1.25rem; text-align: center; background: var(--surface); border: 1px dashed var(--line);
-  border-radius: 10px; color: var(--muted); margin-bottom: 3rem; }
+  border-radius: 12px; color: var(--muted); margin-bottom: 3rem; }
 .msg strong { color: var(--ink); display: block; margin-bottom: .3rem; }
 [hidden] { display: none !important; }
+@media (prefers-reduced-motion: reduce) { .dot.live { animation: none; } }
 </style>
 </head>
 <body>
 <div class="wrap">
   <header>
     <div>
-      <h1>MAIN</h1>
+      <h1>MAIN<span>.</span></h1>
       <p class="sub">My projects, in one place.</p>
     </div>
     <button class="btn" id="theme" type="button">Light mode</button>
   </header>
 
   <main>
+    <section class="portals" id="portals" aria-label="My sites"></section>
+
     <section class="controls" aria-label="Search and filters">
       <div class="row">
         <div class="grow">
@@ -107,25 +137,36 @@ details[open] summary::before { content: "▾"; }
 "use strict";
 const USER = "victorreyesgit";
 
+// Your two sites. They are checked automatically every time MAIN loads.
+const PORTALS = [
+  { name: "Personal Projects", url: "https://victorreyesgit.github.io/Home/" },
+  { name: "Research", url: "https://victorreyesgit.github.io/Portfolio/" }
+];
+
 // Topic convention: access-<value> and category-<value> on each GitHub repo.
-// Order here = display order, sort order, and priority if a repo has several.
 const ACCESS = [
   { key: "portfolio", label: "Portfolio" },
   { key: "home",      label: "Home" },
   { key: "other",     label: "Other" },
-  { key: "none",      label: "None" }          // used when no access-* topic exists
+  { key: "none",      label: "None" }
 ];
 const CATEGORY = [
-  { key: "work",       label: "Work" },
-  { key: "public",     label: "Public" },
-  { key: "private",    label: "Private" },
-  { key: "playground", label: "Playground" },
-  { key: "other",      label: "Other" }        // also used when no category-* topic exists
+  { key: "work",       label: "Work",       color: "#5b8def" },
+  { key: "public",     label: "Public",     color: "#3fcf8e" },
+  { key: "private",    label: "Private",    color: "#a78bfa" },
+  { key: "playground", label: "Playground", color: "#ffb454" },
+  { key: "other",      label: "Other",      color: "#8b93ad" }
 ];
 
 let repos = [];
 const state = { q: "", sort: "updated", forks: false, access: new Set(), cats: new Set() };
 const $ = id => document.getElementById(id);
+function el(tag, cls, text) {
+  const n = document.createElement(tag);
+  if (cls) n.className = cls;
+  if (text !== undefined) n.textContent = text;
+  return n;
+}
 
 // ---------- Theme (dark by default) ----------
 function applyTheme(t) {
@@ -133,8 +174,8 @@ function applyTheme(t) {
   $("theme").textContent = t === "dark" ? "Light mode" : "Dark mode";
 }
 (function () {
-  let t = "dark";
-  try { t = localStorage.getItem("main-theme") || "dark"; } catch (e) {}
+  let t = "light";
+  try { t = localStorage.getItem("main-theme") || "light"; } catch (e) {}
   applyTheme(t);
 })();
 $("theme").addEventListener("click", () => {
@@ -142,6 +183,40 @@ $("theme").addEventListener("click", () => {
   applyTheme(t);
   try { localStorage.setItem("main-theme", t); } catch (e) {}
 });
+
+// ---------- Portals: Home and Portfolio ----------
+
+async function loadPortal(p, dot, desc) {
+  try {
+    const res = await fetch(p.url, { cache: "no-store" });
+    if (!res.ok) throw new Error(res.status);
+    const doc = new DOMParser().parseFromString(await res.text(), "text/html");
+    const meta = doc.querySelector('meta[name="description"]');
+    desc.textContent = (meta && meta.content) || doc.title || "Site is online.";
+    dot.classList.add("live");
+    dot.title = "Online";
+  } catch (e) {
+    desc.textContent = "Couldn't check this site right now. You can still open it.";
+  }
+}
+function buildPortals() {
+  for (const p of PORTALS) {
+    const card = el("article", "portal");
+    const h = el("h2");
+    const dot = el("span", "dot");
+    h.append(dot, document.createTextNode(p.name));
+    const desc = el("p", "", "Checking…");
+    const url = el("div", "url", p.url);
+    const actions = el("div", "actions");
+    const open = el("a", "btn primary", "Open " + p.name);
+    open.href = p.url; open.target = "_blank"; open.rel = "noopener noreferrer";
+    actions.append(open);
+    card.append(h, desc, url, actions);
+    $("portals").append(card);
+    loadPortal(p, dot, desc);
+  }
+}
+buildPortals();
 
 // ---------- Fetch all repos (paginated) ----------
 async function fetchAllRepos() {
@@ -164,20 +239,13 @@ function pick(repo, prefix, list, fallback) {
 }
 const accessOf = r => pick(r, "access-", ACCESS, "none");
 const categoryOf = r => pick(r, "category-", CATEGORY, "other");
-
 function pagesUrl(r) {
-  if (r.homepage && /^https?:\/\//i.test(r.homepage)) return r.homepage;   // custom link set in the repo's About
+  if (r.homepage && /^https?:\/\//i.test(r.homepage)) return r.homepage;
   if (r.has_pages) {
     const root = r.name.toLowerCase() === (USER + ".github.io").toLowerCase();
     return `https://${USER.toLowerCase()}.github.io/` + (root ? "" : r.name + "/");
   }
   return null;
-}
-function el(tag, cls, text) {
-  const n = document.createElement(tag);
-  if (cls) n.className = cls;
-  if (text !== undefined) n.textContent = text;
-  return n;
 }
 const baseRepos = () => repos.filter(r => state.forks || !r.fork);
 
@@ -185,10 +253,11 @@ const baseRepos = () => repos.filter(r => state.forks || !r.fork);
 function buildChips(container, options, set, countFn) {
   container.replaceChildren();
   for (const o of options) {
-    const b = el("button", "chip", o.label);
+    const b = el("button", "chip");
     b.type = "button";
+    if (o.color) { const i = el("i"); i.style.setProperty("--c", o.color); b.append(i); }
+    b.append(document.createTextNode(o.label), el("small", "", String(countFn(o.key))));
     b.setAttribute("aria-pressed", set.has(o.key) ? "true" : "false");
-    b.append(el("small", "", String(countFn(o.key))));
     b.addEventListener("click", () => {
       if (set.has(o.key)) set.delete(o.key); else set.add(o.key);
       b.setAttribute("aria-pressed", set.has(o.key) ? "true" : "false");
@@ -231,18 +300,16 @@ function linkBlock(title, url) {
 function rowFor(r) {
   const li = el("li");
   const det = el("details");
+  det.style.setProperty("--c", categoryOf(r).color);
   const sum = el("summary");
   sum.append(el("span", "name", r.name));
   const labels = el("span", "labels");
-  labels.append(el("span", "tag", "Access: " + accessOf(r).label));
-  labels.append(el("span", "tag", "Category: " + categoryOf(r).label));
+  labels.append(el("span", "tag", "Access: " + accessOf(r).label), el("span", "tag", "Category: " + categoryOf(r).label));
   sum.append(labels);
   det.append(sum);
-
   const links = el("div", "links");
   const p = pagesUrl(r);
-  if (p) links.append(linkBlock("Pages link", p));
-  else links.append(el("span", "none", "No Pages link"));
+  if (p) links.append(linkBlock("Pages link", p)); else links.append(el("span", "none", "No Pages link"));
   links.append(linkBlock("Repository", r.html_url));
   det.append(links);
   li.append(det);
