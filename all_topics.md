@@ -1,24 +1,24 @@
-All topics
+# GitHub Topics
 
-Access
+## Access
 
-access-home
-access-portfolio
-access-other
-access-none
+- `access-home`
+- `access-portfolio`
+- `access-other`
+- `access-none`
 
-Category
+## Category
 
-category-projects
-category-research
-category-playground
-category-other
-category-none
+- `category-projects`
+- `category-research`
+- `category-playground`
+- `category-other`
+- `category-none`
 
-Status
+## Status
 
-status-done
-status-in-progress
-status-idea
-status-abandoned
-status-none
+- `status-done`
+- `status-in-progress`
+- `status-idea`
+- `status-abandoned`
+- `status-none`
