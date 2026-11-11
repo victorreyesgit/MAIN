@@ -4,6 +4,13 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>MAIN · victorreyesgit</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0a122b">
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="MAIN">
 <style>
 :root {
   --bg: #eef1f7; --bg2: #e3e8f2; --surface: #ffffff; --ink: #121830; --muted: #566082;
@@ -228,6 +235,19 @@ async function fetchAllRepos() {
   return all;
 }
 
+// Private repos can't be read by a public page. A scheduled GitHub Action writes
+// their names/topics to private.json (see update-private.yml); we just read that file.
+async function fetchPrivate() {
+  try {
+    const res = await fetch("private.json", { cache: "no-store" });
+    if (!res.ok) return [];
+    const data = await res.json();
+    return data
+      .filter(p => p && typeof p.name === "string" && String(p.html_url).startsWith("https://github.com/"))
+      .map(p => ({ ...p, private: true, topics: p.topics || [], has_pages: false, homepage: null }));
+  } catch (e) { return []; }
+}
+
 // ---------- Helpers ----------
 const niceLabel = key => key.replace(/-/g, " ").replace(/^./, c => c.toUpperCase());
 
@@ -329,6 +349,7 @@ function rowFor(r) {
   const sum = el("summary");
   sum.append(el("span", "name", r.name));
   const labels = el("span", "labels");
+  if (r.private) labels.append(el("span", "tag", "Private"));
   GROUPS.forEach(g => labels.append(el("span", "tag", g.title + ": " + optionOf(r, g).label)));
   sum.append(labels);
   det.append(sum);
@@ -364,11 +385,16 @@ $("reset").addEventListener("click", () => {
   buildAllChips(); render();
 });
 
+// ---------- Installable app (PWA) ----------
+if ("serviceWorker" in navigator) navigator.serviceWorker.register("service-worker.js").catch(() => {});
+
 // ---------- Start ----------
 (async function init() {
   showState("Loading your repositories…", "Asking GitHub for the list.");
   try {
     repos = await fetchAllRepos();
+    const priv = await fetchPrivate();
+    repos = repos.concat(priv.filter(p => !repos.some(r => r.name === p.name)));
     $("state").hidden = true;
     buildOptions();
     buildSortOptions();
