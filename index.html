@@ -141,8 +141,8 @@ const USER = "victorreyesgit";
 
 // Your two sites. They are checked automatically every time MAIN loads.
 const PORTALS = [
-  { name: "Personal Projects", url: "https://victorreyesgit.github.io/Home/" },
-  { name: "Research", url: "https://victorreyesgit.github.io/Portfolio/" }
+  { name: "Projects", url: "https://victorreyesgit.github.io/Projects/" },
+  { name: "Research", url: "https://victorreyesgit.github.io/Research/" }
 ];
 
 // Topic groups. Any topic starting with "<prefix>-" is picked up automatically,
@@ -187,7 +187,7 @@ $("theme").addEventListener("click", () => {
   try { localStorage.setItem("main-theme", t); } catch (e) {}
 });
 
-// ---------- Portals: Home and Portfolio ----------
+// ---------- Portals: Projects and Research ----------
 
 async function loadPortal(p, dot, desc) {
   try {
