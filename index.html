@@ -149,15 +149,15 @@ const PORTALS = [
 // e.g. "category-teaching" becomes the value "Teaching" in the Category group.
 // The "known" values below only control order and colour; new values appear by themselves.
 // To add a whole new group, add one more entry here.
-const GREEN = "#3fcf8e", PURPLE = "#a78bfa", AMBER = "#ffb454", PINK = "#f472b6", GREY = "#8b93ad";
+const GREEN = "#3fcf8e", PURPLE = "#a78bfa", AMBER = "#ffb454", PINK = "#f472b6", CYAN = "#22d3ee", GREY = "#8b93ad";
 const GROUPS = [
   { prefix: "published", title: "Published", known: [
       { key: "projects", color: GREEN }, { key: "research", color: PURPLE }, { key: "other", color: GREY } ] },
   { prefix: "category", title: "Category", rowColor: true, known: [
       { key: "projects", color: GREEN }, { key: "research", color: PURPLE }, { key: "teaching", color: PINK },
-      { key: "playground", color: AMBER }, { key: "site", color: GREY }, { key: "other", color: GREY } ] },
+      { key: "playground", color: AMBER }, { key: "site", color: CYAN }, { key: "other", color: GREY } ] },
   { prefix: "status", title: "Status", known: [
-      { key: "done" }, { key: "in-progress" }, { key: "idea" }, { key: "abandoned" } ] }
+      { key: "done", icon: "✅" }, { key: "in-progress", icon: "⏳" }, { key: "idea", icon: "💡" }, { key: "abandoned", icon: "🪦" } ] }
 ];
 
 let repos = [];
@@ -261,7 +261,7 @@ function buildOptions() {
     const known = g.known.map(k => k.key);
     const extra = [...found].filter(k => !known.includes(k)).sort();
     g.options = [...g.known, ...extra.map(k => ({ key: k, color: GREY })), { key: "none", color: GREY }]
-      .map(o => ({ key: o.key, label: niceLabel(o.key), color: g.known.some(k => k.color) ? o.color : undefined }));
+      .map(o => ({ key: o.key, label: (o.icon ? o.icon + " " : "") + niceLabel(o.key), color: g.known.some(k => k.color) ? o.color : undefined }));
   }
 }
 function optionOf(r, g) {
