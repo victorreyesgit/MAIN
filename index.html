@@ -125,6 +125,7 @@ details[open] summary::before { content: "▾"; }
       <div id="groups" class="groups"></div>
       <div class="row">
         <label class="check"><input type="checkbox" id="forks"> Show forks</label>
+        <label class="check"><input type="checkbox" id="archived"> Show archived</label>
         <button class="btn" id="reset" type="button">Reset filters</button>
       </div>
     </section>
@@ -149,19 +150,21 @@ const PORTALS = [
 // e.g. "category-teaching" becomes the value "Teaching" in the Category group.
 // The "known" values below only control order and colour; new values appear by themselves.
 // To add a whole new group, add one more entry here.
-const GREEN = "#3fcf8e", PURPLE = "#a78bfa", AMBER = "#ffb454", PINK = "#f472b6", CYAN = "#22d3ee", GREY = "#8b93ad";
+const GREEN = "#3fcf8e", PURPLE = "#a78bfa", AMBER = "#ffb454", PINK = "#f472b6", CYAN = "#22d3ee", BLUE = "#60a5fa", GREY = "#8b93ad";
+// Colours for new values that are not listed in "known" below (picked in turn).
+const EXTRA_COLORS = ["#f87171", "#facc15", "#34d399", "#fb923c", "#e879f9", "#a3e635"];
 const GROUPS = [
   { prefix: "published", title: "Published", known: [
-      { key: "projects", color: GREEN }, { key: "research", color: PURPLE }, { key: "other", color: GREY } ] },
+      { key: "projects", color: GREEN }, { key: "research", color: PURPLE }, { key: "other", color: BLUE } ] },
   { prefix: "category", title: "Category", rowColor: true, known: [
       { key: "projects", color: GREEN }, { key: "research", color: PURPLE }, { key: "teaching", color: PINK },
-      { key: "playground", color: AMBER }, { key: "site", color: CYAN }, { key: "other", color: GREY } ] },
+      { key: "playground", color: AMBER }, { key: "site", color: CYAN }, { key: "other", color: BLUE } ] },
   { prefix: "status", title: "Status", known: [
       { key: "done", icon: "✅" }, { key: "in-progress", icon: "⏳" }, { key: "idea", icon: "💡" }, { key: "abandoned", icon: "🪦" } ] }
 ];
 
 let repos = [];
-const state = { q: "", sort: "updated", forks: false, sel: {} };   // sel[prefix] = Set of selected keys
+const state = { q: "", sort: "updated", forks: false, archived: false, sel: {} };   // sel[prefix] = Set of selected keys
 GROUPS.forEach(g => state.sel[g.prefix] = new Set());
 const $ = id => document.getElementById(id);
 function el(tag, cls, text) {
@@ -260,7 +263,7 @@ function buildOptions() {
     found.delete("none");
     const known = g.known.map(k => k.key);
     const extra = [...found].filter(k => !known.includes(k)).sort();
-    g.options = [...g.known, ...extra.map(k => ({ key: k, color: GREY })), { key: "none", color: GREY }]
+    g.options = [...g.known, ...extra.map((k, i) => ({ key: k, color: EXTRA_COLORS[i % EXTRA_COLORS.length] })), { key: "none", color: GREY }]
       .map(o => ({ key: o.key, label: (o.icon ? o.icon + " " : "") + niceLabel(o.key), color: g.known.some(k => k.color) ? o.color : undefined }));
   }
 }
@@ -276,7 +279,7 @@ function pagesUrl(r) {
   }
   return null;
 }
-const baseRepos = () => repos.filter(r => state.forks || !r.fork);
+const baseRepos = () => repos.filter(r => (state.forks || !r.fork) && (state.archived || !r.archived));
 
 // ---------- Chips ----------
 function buildAllChips() {
@@ -290,10 +293,12 @@ function buildAllChips() {
     wrap.append(el("span", "lbl", g.title));
     const chips = el("div", "chips");
     for (const o of g.options) {
+      const n = list.filter(r => optionOf(r, g).key === o.key).length;
+      if (n === 0 && !set.has(o.key)) continue;   // hide empty options
       const b = el("button", "chip");
       b.type = "button";
       if (o.color) { const i = el("i"); i.style.setProperty("--c", o.color); b.append(i); }
-      b.append(document.createTextNode(o.label), el("small", "", String(list.filter(r => optionOf(r, g).key === o.key).length)));
+      b.append(document.createTextNode(o.label), el("small", "", String(n)));
       b.setAttribute("aria-pressed", set.has(o.key) ? "true" : "false");
       b.addEventListener("click", () => {
         if (set.has(o.key)) set.delete(o.key); else set.add(o.key);
@@ -350,6 +355,7 @@ function rowFor(r) {
   sum.append(el("span", "name", r.name));
   const labels = el("span", "labels");
   if (r.private) labels.append(el("span", "tag", "Private"));
+  if (r.archived) labels.append(el("span", "tag", "Archived"));
   GROUPS.forEach(g => labels.append(el("span", "tag", g.title + ": " + optionOf(r, g).label)));
   sum.append(labels);
   det.append(sum);
@@ -378,10 +384,11 @@ function render() {
 $("q").addEventListener("input", e => { state.q = e.target.value; render(); });
 $("sort").addEventListener("change", e => { state.sort = e.target.value; render(); });
 $("forks").addEventListener("change", e => { state.forks = e.target.checked; buildAllChips(); render(); });
+$("archived").addEventListener("change", e => { state.archived = e.target.checked; buildAllChips(); render(); });
 $("reset").addEventListener("click", () => {
-  state.q = ""; state.sort = "updated"; state.forks = false;
+  state.q = ""; state.sort = "updated"; state.forks = false; state.archived = false;
   GROUPS.forEach(g => state.sel[g.prefix].clear());
-  $("q").value = ""; $("sort").value = "updated"; $("forks").checked = false;
+  $("q").value = ""; $("sort").value = "updated"; $("forks").checked = false; $("archived").checked = false;
   buildAllChips(); render();
 });
 
